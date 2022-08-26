@@ -1,7 +1,9 @@
 {
+  "name": "Vou de moto",
   "expo": {
-    "name": "expo-app",
-    "slug": "expo-app",
+    "name": "Vou de moto",
+    "slug": "voudemoto",
+    "scheme": "voudemoto",
     "version": "1.0.0",
     "assetBundlePatterns": [
       "**/*"
