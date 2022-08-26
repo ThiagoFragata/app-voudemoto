@@ -1,47 +1,58 @@
-import React from 'react';
-import {Image, Text} from 'react-native';
+import React from "react";
+import { Alert, Image } from "react-native";
 
-import {
-  Background,
-  Card,
-  Container,
-  Paragraph,
-  Subtitle,
-  Title,
-} from './styles';
+import { Box, TextBold, TextRegular } from "../../styles/globalStyles";
+import { Background, Card, Paragraph } from "./styles";
 
-import imgMotoboy from '../../assets/motoboy.png';
-import imgPassenger from '../../assets/passenger.png';
-import backgroundType from '../../assets/pin-marker2.png';
+import imgMotoboy from "../../assets/motoboy.png";
+import imgPassenger from "../../assets/passenger.png";
+import backgroundType from "../../assets/pin-marker2.png";
+import { useTheme } from "styled-components";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth, userStorageKey } from "../../hooks/auth";
 
-export default function Type() {
+export default function Type({ navigation }) {
+  const theme = useTheme();
+  const { user, setUser } = useAuth();
+
   function isMotoboy() {
-    // alert('mototaxista');
+    navigation.navigate("Motoboy");
   }
 
-  function isPassenger() {
-    // alert('passageiro');
+  async function isPassenger() {
+    Alert.alert("Passageiro cadastrado com sucesso");
+    setUser({
+      ...user,
+      isAuthenticated: true,
+      userType: "motoboy",
+    });
+    await AsyncStorage.setItem(userStorageKey, JSON.stringify(user));
+    navigation.navigate("Home");
   }
 
   return (
-    <Container>
+    <Box color={theme.colors.secondary_dark}>
       <Background source={backgroundType} />
-      <Title>Vou de moto</Title>
-      <Subtitle>
+
+      <TextBold size={32} color={theme.colors.black_dark} align="center">
+        Vou de moto
+      </TextBold>
+
+      <TextRegular size={16} color={theme.colors.black_dark} align="center">
         Conectando passageiros a motoristas. O que você precisa?
-      </Subtitle>
+      </TextRegular>
 
       <Card onPress={isMotoboy} active>
         <Image source={imgMotoboy} />
-        <Paragraph>Busco novas oportunidades</Paragraph>
+        <Paragraph>Sou Mototaxista</Paragraph>
       </Card>
 
-      <Text>ou</Text>
+      <TextBold align="center">ou</TextBold>
 
       <Card onPress={isPassenger}>
         <Image source={imgPassenger} />
-        <Paragraph>Estou precisando de um mototaxista</Paragraph>
+        <Paragraph>Sou Passageiro</Paragraph>
       </Card>
-    </Container>
+    </Box>
   );
 }

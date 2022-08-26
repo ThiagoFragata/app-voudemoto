@@ -1,11 +1,50 @@
 import styled from "styled-components/native";
 import MapView from "react-native-maps";
 
-interface BoxProps {
+interface Props {
+  direction?: string;
   align?: string;
   justify?: string;
+
   color?: string;
+
+  padding?: number;
+  marginTop?: string;
+  marginBottom?: string;
+  marginLeft?: string;
+  marginRight?: string;
 }
+
+export const Box = styled.View<Props>`
+  flex: 1;
+  flex-direction: ${({ direction }) => direction || "column"};
+  justify-content: ${({ justify }) => justify || "center"};
+  align-items: ${({ align }) => align || "center"};
+
+  padding: ${({ padding }) => (padding ? padding + "px" : "0")};
+
+  margin-top: ${({ marginTop }) => marginTop || "0"};
+  margin-bottom: ${({ marginBottom }) => marginBottom || "0"};
+  margin-left: ${({ marginLeft }) => marginLeft || "0"};
+  margin-right: ${({ marginRight }) => marginRight || "0"};
+
+  background: ${({ color }) => (color ? color : "transparent")};
+`;
+export const Flex = styled.View<Props>`
+  width: 100%;
+  flex-direction: ${({ direction }) => direction || "row"};
+  justify-content: ${({ justify }) => justify || "center"};
+  align-items: ${({ align }) => align || "center"};
+
+  padding: ${({ padding }) => (padding ? padding + "px" : "0")};
+
+  margin-top: ${({ marginTop }) => marginTop || "0"};
+  margin-bottom: ${({ marginBottom }) => marginBottom || "0"};
+  margin-left: ${({ marginLeft }) => marginLeft || "0"};
+  margin-right: ${({ marginRight }) => marginRight || "0"};
+
+  background: ${({ color }) => (color ? color : "transparent")};
+`;
 
 interface TextProps {
   family?: string;
@@ -14,55 +53,44 @@ interface TextProps {
   color?: string;
 }
 
-interface Props {
-  align?: string;
-  weight?: string;
-  disabled?: boolean;
-  color?: string;
-  fSize?: string;
-}
-
-export const Box = styled.View<BoxProps>`
-  border: 1px solid red;
-  flex: 1;
-  justify-content: ${({ justify }) => justify || "center"};
-  align-items: ${({ align }) => align || "center"};
-
-  background: ${({ color, theme }) =>
-    color ? theme.colors.secondary_dark : "transparent"};
-`;
-
 export const TextBold = styled.Text<TextProps>`
+  width: 100%;
   font-family: ${({ theme }) => theme.fonts.bold};
 
   color: ${({ color, theme }) => (color ? color : theme.colors.black_dark)};
 
   font-size: ${({ size }) => (size ? `${size}px` : "16px")};
-  text-align: ${({ align }) => (align ? align : "center")};
+  text-align: ${({ align }) => (align ? align : "left")};
 `;
 
 export const TextMedium = styled.Text<TextProps>`
+  width: 100%;
+
   font-family: ${({ theme }) => theme.fonts.medium};
   color: ${({ color, theme }) => (color ? color : theme.colors.black_dark)};
 
   font-size: ${({ size }) => (size ? `${size}px` : "16px")};
-  text-align: ${({ align }) => (align ? align : "center")};
+  text-align: ${({ align }) => (align ? align : "left")};
 `;
 
 export const TextRegular = styled.Text<TextProps>`
+  width: 100%;
+
   font-family: ${({ theme }) => theme.fonts.regular};
 
   color: ${({ color, theme }) => (color ? color : theme.colors.black_dark)};
   font-size: ${({ size }) => (size ? `${size}px` : "16px")};
-  text-align: ${({ align }) => (align ? align : "center")};
+  text-align: ${({ align }) => (align ? align : "left")};
 `;
 
 export const TextThin = styled.Text<TextProps>`
+  width: 100%;
+
   font-family: ${({ theme }) => theme.fonts.thin};
 
   color: ${({ color, theme }) => (color ? color : theme.colors.black_dark)};
   font-size: ${({ size }) => (size ? `${size}px` : "16px")};
-  text-align: ${({ align }) => (align ? align : "center")};
+  text-align: ${({ align }) => (align ? align : "left")};
 `;
 
 export const Map = styled(MapView)`
@@ -72,9 +100,41 @@ export const Map = styled(MapView)`
   opacity: ${({ disabled }) => (disabled ? 0.2 : 1)};
 `;
 
-export const Bullet = styled.View<Props>`
+interface BulletProps {
+  align?: string;
+  weight?: string;
+  disabled?: boolean;
+  color?: string;
+  fSize?: string;
+}
+
+export const Bullet = styled.View<BulletProps>`
   width: 8px;
   height: 8px;
   border-radius: 8px;
   background-color: ${({ color }) => (color ? color : "gray")};
+`;
+
+export const ButtonSuccess = styled.TouchableOpacity`
+  width: 100%;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+
+  background-color: ${({ theme }) => theme.colors.success_100};
+  padding: 8px 16px;
+
+  border-radius: 16px;
+`;
+
+export const ButtonCancel = styled.TouchableOpacity`
+  width: 100%;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.danger_100};
+  padding: 8px 16px;
+
+  border-radius: 16px;
 `;

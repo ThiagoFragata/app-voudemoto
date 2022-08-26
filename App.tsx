@@ -42,17 +42,15 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <AuthProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
-            {/* <C.Box onLayout={onLayoutRootView}> */}
             <StatusBar style="auto" />
             <Routes />
-            {/* </C.Box> */}
           </GestureHandlerRootView>
         </AuthProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }

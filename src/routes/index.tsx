@@ -12,7 +12,12 @@ export function Routes() {
 
   return (
     <NavigationContainer>
-      {user.id ? <AppRoutes /> : <AuthRoutes />}
+      {/* <AuthRoutes /> */}
+      {user.userType !== "" && user.isAuthenticated ? (
+        <AppRoutes />
+      ) : (
+        <AuthRoutes />
+      )}
     </NavigationContainer>
   );
 }

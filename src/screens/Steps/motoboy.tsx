@@ -1,206 +1,145 @@
 import React from "react";
-
-import { useForm, Controller } from "react-hook-form";
-
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
-
+import { useForm } from "react-hook-form";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "styled-components";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scrollview";
 
-import { ButtonPayment, InputMasked, RegisterMotoboy } from "./styles";
+import {
+  Box,
+  ButtonCancel,
+  ButtonSuccess,
+  Flex,
+  TextMedium,
+} from "../../styles/globalStyles";
+import { Spacer } from "../Login/styles";
+import { InputForm } from "../../components/InputForm";
+import { Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth, userStorageKey } from "../../hooks/auth";
 
-export default function Motoboy() {
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      name: "",
-      phone: "",
-      email: "",
-      licensePlate: "",
-      vehicleModel: "",
-      vehicleColor: "",
-    },
-  });
-  const onSubmit = (data) => console.log(data);
+interface FormData {
+  modelo: string;
+  cor: string;
+  placa: string;
+  tipo: string;
+  chave: string;
+}
+
+export default function Motoboy({ navigation }) {
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const { user, setUser } = useAuth();
+
+  const { control, handleSubmit } = useForm();
+
+  async function handleRegister(form: FormData) {
+    const payload = {
+      model: form.modelo,
+      color: form.cor,
+      plate: form.placa,
+      typeKey: form.tipo,
+      keyPix: form.chave,
+    };
+
+    setUser({
+      ...user,
+      isAuthenticated: true,
+      userType: "motoboy",
+      model: form.modelo,
+      color: form.cor,
+      plate: form.placa,
+      type: form.tipo,
+      key: form.chave,
+    });
+
+    await AsyncStorage.setItem(userStorageKey, JSON.stringify(user));
+    Alert.alert("Moto-taxista cadastrado com sucesso");
+    navigation.navigate("Home");
+  }
 
   return (
-    <>
-      <View>
-        <TouchableOpacity>
-          <Text>Voltar</Text>
-        </TouchableOpacity>
+    <Box color={theme.colors.secondary_dark} justify="flex-start">
+      <Flex
+        marginTop={`${insets.top}px`}
+        direction="column"
+        padding={16}
+        align="flex-start"
+      >
+        <KeyboardAwareScrollView
+          style={{
+            width: "100%",
+          }}
+        >
+          <TextMedium color={theme.colors.white} size={16} align="center">
+            Dados do veículo
+          </TextMedium>
 
-        <Text>Dados Cadastrais</Text>
+          <Spacer space="16px" />
 
-        <TouchableOpacity>
-          <Text>Cancelar</Text>
-        </TouchableOpacity>
-      </View>
+          <InputForm
+            label="Modelo do veículo"
+            placeholder="Digite o modelo"
+            control={control}
+            name="modelo"
+          />
+          <InputForm
+            label="Cor do veículo"
+            placeholder="Digite o cor"
+            control={control}
+            name="cor"
+          />
+          <InputForm
+            label="Placa do veículo"
+            placeholder="Digite o Placa"
+            control={control}
+            name="placa"
+          />
 
-      <RegisterMotoboy>
-        <KeyboardAwareScrollView>
-          <View>
-            <View>
-              <Controller
-                control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <>
-                    <Text>Nome</Text>
-                    <TextInput
-                      keyboardType="default"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                    />
-                  </>
-                )}
-                name="name"
-              />
-              {errors.name && <Text>Nome é obrigatório.</Text>}
-            </View>
-          </View>
+          <Spacer space="16px" />
 
-          <View>
-            <View>
-              <Controller
-                control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <>
-                    <Text>Telefone</Text>
-                    <InputMasked
-                      // style={styles.input}
-                      type={"cel-phone"}
-                      options={{
-                        maskType: "BRL",
-                        withDDD: true,
-                        dddMask: "(99) ",
-                      }}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                    />
-                  </>
-                )}
-                name="phone"
-              />
-              {errors.phone && <Text>Número do telefone é obrigatório.</Text>}
-            </View>
-          </View>
+          <TextMedium color={theme.colors.white} size={16} align="center">
+            Dados de pagamento
+          </TextMedium>
 
-          <View>
-            <View>
-              <Controller
-                control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <>
-                    <Text>E-mail</Text>
-                    <TextInput
-                      keyboardType="email-address"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                    />
-                  </>
-                )}
-                name="email"
-              />
-              {errors.email && <Text>É-mail é obrigatório..</Text>}
-            </View>
-          </View>
+          <Spacer space="16px" />
 
-          <View>
-            <View>
-              <Controller
-                control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <>
-                    <Text>CNH</Text>
-                    <InputMasked
-                      type={"custom"}
-                      options={{
-                        mask: "99999999999",
-                      }}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                    />
-                  </>
-                )}
-                name="licensePlate"
-              />
-              {errors.licensePlate && <Text>Número da CNH é obrigatório.</Text>}
-            </View>
-          </View>
+          {/* <InputSelect label="Tipo de Chave" /> */}
 
-          <View>
-            <View>
-              <Controller
-                control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <>
-                    <Text>Placa do veículo</Text>
-                    <TextInput
-                      keyboardType="default"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                    />
-                  </>
-                )}
-                name="vehicleModel"
-              />
-              {errors.vehicleModel && (
-                <Text>Número da placa é obrigatório.</Text>
-              )}
-            </View>
+          <InputForm
+            label="Tipo de Chave"
+            placeholder="Selecione um tipo"
+            control={control}
+            name="tipo"
+          />
 
-            <View>
-              <Controller
-                control={control}
-                rules={{
-                  required: true,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <>
-                    <Text>Cor do veículo</Text>
-                    <TextInput
-                      keyboardType="default"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                    />
-                  </>
-                )}
-                name="vehicleColor"
-              />
-              {errors.vehicleColor && (
-                <Text>Cor do veículo é obrigatório.</Text>
-              )}
-            </View>
-          </View>
+          <InputForm
+            label="Chave pix"
+            placeholder="Digite ou cole aqui a sua chave pix"
+            control={control}
+            name="chave"
+          />
 
-          <TouchableOpacity onPress={handleSubmit(onSubmit)}>
-            <ButtonPayment>Cadastrar</ButtonPayment>
-          </TouchableOpacity>
+          <Spacer space="32px" />
+
+          <ButtonCancel>
+            <TextMedium
+              color={theme.colors.danger_100}
+              size={12}
+              align="center"
+            >
+              Cancelar
+            </TextMedium>
+          </ButtonCancel>
+
+          <Spacer space="24px" />
+
+          <ButtonSuccess onPress={handleSubmit(handleRegister)}>
+            <TextMedium color={theme.colors.white} size={12} align="center">
+              Cadastrar
+            </TextMedium>
+          </ButtonSuccess>
         </KeyboardAwareScrollView>
-      </RegisterMotoboy>
-    </>
+      </Flex>
+    </Box>
   );
 }

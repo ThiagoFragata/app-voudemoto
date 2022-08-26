@@ -18,15 +18,23 @@ interface AuthProviderProps {
 }
 
 interface UserProps {
+  isAuthenticated: boolean;
   id: string;
   name: string;
   email: string;
   avatar?: string;
+  model?: string;
+  color?: string;
+  plate?: string;
+  type?: string;
+  key?: string;
+  userType?: string;
 }
 
 interface AuthContextData {
   user: UserProps;
   userStorageLoading: boolean;
+  setUser: React.Dispatch<React.SetStateAction<UserProps>>;
 
   signInWithGoogle(): Promise<void>;
   signOut(): Promise<void>;
@@ -45,11 +53,11 @@ const { REDIRECT_URI } = process.env;
 WebBrowser.maybeCompleteAuthSession();
 
 export const AuthContext = createContext({} as AuthContextData);
+export const userStorageKey = "@voudemoto:user";
 
 function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<UserProps>({} as UserProps);
   const [userStorageLoading, setUserStorageLoading] = useState(true);
-  const userStorageKey = "@voudemoto:user";
 
   useEffect(() => {
     async function loadUser() {
@@ -81,6 +89,8 @@ function AuthProvider({ children }: AuthProviderProps) {
         const userInfo = await response.json();
 
         const loadedUser: UserProps = {
+          userType: "",
+          isAuthenticated: false,
           id: String(userInfo.id),
           name: userInfo.given_name,
           email: userInfo.email,
@@ -88,7 +98,7 @@ function AuthProvider({ children }: AuthProviderProps) {
         };
 
         setUser(loadedUser);
-        await AsyncStorage.setItem(userStorageKey, JSON.stringify(loadedUser));
+        // await AsyncStorage.setItem(userStorageKey, JSON.stringify(loadedUser));
       }
     } catch (err) {
       throw new Error(err);
@@ -96,13 +106,14 @@ function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signOut = async () => {
-    setUser({} as UserProps);
-
+    setUser({
+      isAuthenticated: false,
+    } as UserProps);
     await AsyncStorage.removeItem(userStorageKey);
   };
 
   const value = useMemo(
-    () => ({ user, userStorageLoading, signInWithGoogle, signOut }),
+    () => ({ user, setUser, userStorageLoading, signInWithGoogle, signOut }),
     [user, userStorageLoading]
   );
 

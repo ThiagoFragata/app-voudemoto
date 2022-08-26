@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
 import { PROVIDER_GOOGLE } from "react-native-maps";
@@ -6,6 +6,7 @@ import { PROVIDER_GOOGLE } from "react-native-maps";
 import Pulse from "react-native-pulse";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ButtonSignOut } from "../../components/ButtonSignOut";
+import { useAuth } from "../../hooks/auth";
 import { Box, Bullet, Map } from "../../styles/globalStyles";
 import { Spacer } from "../Login/styles";
 
@@ -38,6 +39,12 @@ export default function Home() {
   // P - Pesquisando
   // A - Aceitar Corrida
   // C - Em Corrida
+  const { user } = useAuth();
+
+  useEffect(() => {
+    console.log(user);
+  }, []);
+
   return (
     <ContainerHome>
       <ButtonSignOut />
@@ -57,11 +64,11 @@ export default function Home() {
           <AvatarCard top={`${insets.top}px`}>
             <Avatar
               source={{
-                uri: "https://images.unsplash.com/photo-1494158064015-7ff877b5bb2b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2048&q=80",
+                uri: user.avatar,
               }}
             />
             <View>
-              <TitleAvatar>John Doe</TitleAvatar>
+              <TitleAvatar>{user.name}</TitleAvatar>
               <SubtitleAvatar>Passageiro</SubtitleAvatar>
             </View>
           </AvatarCard>
