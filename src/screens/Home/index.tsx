@@ -39,10 +39,11 @@ export default function Home() {
   // P - Pesquisando
   // A - Aceitar Corrida
   // C - Em Corrida
-  const { user } = useAuth();
+  const { user, avatar } = useAuth();
 
+  //buscar dados do user
   useEffect(() => {
-    console.log(user);
+    setType(user.userType);
   }, []);
 
   return (
@@ -58,23 +59,24 @@ export default function Home() {
         }}
         disabled={status === "I" || status === "P"}
       />
+
       {/* passageiro sem corrida à procurar corrida */}
       {type === "P" && status === "S" && (
         <>
           <AvatarCard top={`${insets.top}px`}>
             <Avatar
               source={{
-                uri: user.avatar,
+                uri: avatar,
               }}
             />
             <View>
               <TitleAvatar>{user.name}</TitleAvatar>
-              <SubtitleAvatar>Passageiro</SubtitleAvatar>
+              {/* <SubtitleAvatar>Passageiro</SubtitleAvatar> */}
             </View>
           </AvatarCard>
 
           <BoxHome>
-            <SubtitleAvatar>Olá, John Doe</SubtitleAvatar>
+            <SubtitleAvatar>Olá, {user.name}</SubtitleAvatar>
             <TitleAvatar>Para onde você quer ir?</TitleAvatar>
             {/* <InputHome keyboardType="default" /> */}
           </BoxHome>
@@ -151,11 +153,11 @@ export default function Home() {
             <Card justify="flex-start">
               <Avatar
                 source={{
-                  uri: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2080&q=80",
+                  uri: avatar,
                 }}
               />
               <View>
-                <TitleAvatar>John Smith</TitleAvatar>
+                <TitleAvatar>Nome motorista</TitleAvatar>
                 <SubtitleAvatar>XJ 600 Preta, JSK423</SubtitleAvatar>
               </View>
             </Card>
@@ -182,17 +184,17 @@ export default function Home() {
           <AvatarCard top={`${insets.top}px`}>
             <Avatar
               source={{
-                uri: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2080&q=80",
+                uri: avatar,
               }}
             />
             <View>
-              <TitleAvatar>John Smith</TitleAvatar>
-              <SubtitleAvatar>XJ 600 Preta, JSK423</SubtitleAvatar>
+              <TitleAvatar>{user.name}</TitleAvatar>
+              <SubtitleAvatar>{user.email}</SubtitleAvatar>
             </View>
           </AvatarCard>
 
           <BoxHome>
-            <TitleAvatar>Olá, John Smith</TitleAvatar>
+            <TitleAvatar>Olá, {user.name}</TitleAvatar>
             <SubtitleAvatar align="left">
               Nenhuma corrida encontrada no momento!
             </SubtitleAvatar>
@@ -206,12 +208,12 @@ export default function Home() {
           <AvatarCard top={`${insets.top}px`}>
             <Avatar
               source={{
-                uri: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2080&q=80",
+                uri: avatar,
               }}
             />
             <View>
-              <TitleAvatar>John Smith</TitleAvatar>
-              <SubtitleAvatar>XJ 600 Preta, JSK423</SubtitleAvatar>
+              <TitleAvatar>{user.name}</TitleAvatar>
+              <SubtitleAvatar>{user.email}</SubtitleAvatar>
             </View>
           </AvatarCard>
 
@@ -220,12 +222,12 @@ export default function Home() {
               <Card justify="flex-start">
                 <Avatar
                   source={{
-                    uri: "https://images.unsplash.com/photo-1494158064015-7ff877b5bb2b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2048&q=80",
+                    uri: user.avatar,
                   }}
                 />
 
                 <View>
-                  <TitleAvatar>John Doe</TitleAvatar>
+                  <TitleAvatar>{user.name}</TitleAvatar>
                   <SubtitleAvatar>2km</SubtitleAvatar>
                 </View>
               </Card>
@@ -263,12 +265,12 @@ export default function Home() {
           <AvatarCard top={`${insets.top}px`}>
             <Avatar
               source={{
-                uri: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2080&q=80",
+                uri: avatar,
               }}
             />
             <View>
-              <TitleAvatar>John Smith</TitleAvatar>
-              <SubtitleAvatar>XJ 600 Preta, JSK423</SubtitleAvatar>
+              <TitleAvatar>{user.name}</TitleAvatar>
+              <SubtitleAvatar>{user.email}</SubtitleAvatar>
             </View>
           </AvatarCard>
 
@@ -277,12 +279,12 @@ export default function Home() {
               <Card justify="flex-start">
                 <Avatar
                   source={{
-                    uri: "https://images.unsplash.com/photo-1494158064015-7ff877b5bb2b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2048&q=80",
+                    uri: user.avatar,
                   }}
                 />
 
                 <View>
-                  <TitleAvatar>John Doe</TitleAvatar>
+                  <TitleAvatar>{user.name}</TitleAvatar>
                   <SubtitleAvatar>2km</SubtitleAvatar>
                 </View>
               </Card>

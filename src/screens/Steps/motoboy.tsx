@@ -15,10 +15,13 @@ import { Spacer } from "../Login/styles";
 import { InputForm } from "../../components/InputForm";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth, userStorageKey } from "../../hooks/auth";
+import { useAuth } from "../../hooks/auth";
+import { userStorageKey } from "../../utils/keys";
+import { api } from "../../services/axios";
 
 interface FormData {
   modelo: string;
+  marca: string;
   cor: string;
   placa: string;
   tipo: string;
@@ -33,28 +36,45 @@ export default function Motoboy({ navigation }) {
   const { control, handleSubmit } = useForm();
 
   async function handleRegister(form: FormData) {
-    const payload = {
-      model: form.modelo,
-      color: form.cor,
-      plate: form.placa,
-      typeKey: form.tipo,
-      keyPix: form.chave,
-    };
+    try {
+      const payload = {
+        user: {
+          gId: user.id,
+          nome: user.name,
+          email: user.email,
+          tipo: "M",
+        },
+        motoboy: {
+          placa: form.placa,
+          marca: form.marca,
+          modelo: form.modelo,
+          cor: form.cor,
+        },
+        payment: {
+          tipoChave: form.tipo,
+          chave: form.chave,
+        },
+      };
 
-    setUser({
-      ...user,
-      isAuthenticated: true,
-      userType: "motoboy",
-      model: form.modelo,
-      color: form.cor,
-      plate: form.placa,
-      type: form.tipo,
-      key: form.chave,
-    });
+      setUser({
+        ...user,
+        isAuthenticated: true,
+        userType: "M",
+        model: form.modelo,
+        color: form.cor,
+        plate: form.placa,
+        type: form.tipo,
+        key: form.chave,
+      });
 
-    await AsyncStorage.setItem(userStorageKey, JSON.stringify(user));
-    Alert.alert("Moto-taxista cadastrado com sucesso");
-    navigation.navigate("Home");
+      await api.post("/signup", payload);
+      await AsyncStorage.setItem(userStorageKey, JSON.stringify(user));
+
+      Alert.alert("Moto-taxista cadastrado com sucesso!");
+      navigation.navigate("Home");
+    } catch (error) {
+      Alert.alert("Error ao cadastrar moto-taxista!");
+    }
   }
 
   return (
@@ -82,6 +102,14 @@ export default function Motoboy({ navigation }) {
             control={control}
             name="modelo"
           />
+
+          <InputForm
+            label="Marca do veículo"
+            placeholder="Digite a marca"
+            control={control}
+            name="marca"
+          />
+
           <InputForm
             label="Cor do veículo"
             placeholder="Digite o cor"

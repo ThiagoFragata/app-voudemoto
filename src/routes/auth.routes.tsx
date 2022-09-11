@@ -17,8 +17,6 @@ export function AuthRoutes() {
         component={Motoboy}
         options={{ headerShown: false }}
       />
-      {/* <Screen name="Home" component={Home} options={{ headerShown: false }} />
-      <Screen name="Ride" component={Ride} options={{ headerShown: false }} /> */}
     </Navigator>
   );
 }

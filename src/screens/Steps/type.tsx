@@ -9,7 +9,9 @@ import imgPassenger from "../../assets/passenger.png";
 import backgroundType from "../../assets/pin-marker2.png";
 import { useTheme } from "styled-components";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth, userStorageKey } from "../../hooks/auth";
+import { useAuth } from "../../hooks/auth";
+import { userStorageKey } from "../../utils/keys";
+import { api } from "../../services/axios";
 
 export default function Type({ navigation }) {
   const theme = useTheme();
@@ -20,14 +22,31 @@ export default function Type({ navigation }) {
   }
 
   async function isPassenger() {
-    Alert.alert("Passageiro cadastrado com sucesso");
-    setUser({
-      ...user,
-      isAuthenticated: true,
-      userType: "motoboy",
-    });
-    await AsyncStorage.setItem(userStorageKey, JSON.stringify(user));
-    navigation.navigate("Home");
+    try {
+      Alert.alert("Passageiro cadastrado com sucesso");
+      setUser({
+        ...user,
+        isAuthenticated: true,
+        userType: "P",
+      });
+
+      const payload = {
+        user: {
+          gId: user.id,
+          nome: user.name,
+          email: user.email,
+          tipo: "P",
+        },
+      };
+
+      await api.post("/signup", payload);
+      await AsyncStorage.setItem(userStorageKey, JSON.stringify(user));
+
+      navigation.navigate("Home");
+    } catch (err) {
+      Alert.alert("Não foi possível concluir o cadastro!");
+      console.log(err.message);
+    }
   }
 
   return (

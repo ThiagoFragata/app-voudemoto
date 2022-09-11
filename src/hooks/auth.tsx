@@ -12,6 +12,9 @@ import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { userStorageKey } from "../utils/keys";
+import { api } from "../services/axios";
+import { SubtitleAvatar } from "../screens/Home/styles";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -35,6 +38,7 @@ interface AuthContextData {
   user: UserProps;
   userStorageLoading: boolean;
   setUser: React.Dispatch<React.SetStateAction<UserProps>>;
+  avatar: string;
 
   signInWithGoogle(): Promise<void>;
   signOut(): Promise<void>;
@@ -53,23 +57,55 @@ const { REDIRECT_URI } = process.env;
 WebBrowser.maybeCompleteAuthSession();
 
 export const AuthContext = createContext({} as AuthContextData);
-export const userStorageKey = "@voudemoto:user";
 
 function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<UserProps>({} as UserProps);
+  const [avatar, setAvatar] = useState("");
+  const [refetch, setRefetch] = useState(true);
   const [userStorageLoading, setUserStorageLoading] = useState(true);
 
   useEffect(() => {
     async function loadUser() {
       const asyncUser = await AsyncStorage.getItem(userStorageKey);
 
-      if (asyncUser) setUser(JSON.parse(asyncUser));
-
-      setUserStorageLoading(false);
+      if (asyncUser) {
+        const userInfo = JSON.parse(asyncUser);
+        setUser(userInfo);
+        setUserStorageLoading(false);
+      }
     }
 
     loadUser();
   }, []);
+
+  async function checkLogin() {
+    try {
+      const asyncUser = await AsyncStorage.getItem(userStorageKey);
+      const userInfo = JSON.parse(asyncUser);
+
+      if (userInfo.email) {
+        const { data } = await api.post("/check-user", {
+          email: userInfo.email,
+        });
+
+        setUser({
+          userType: data.user.tipo,
+          id: String(userInfo.id),
+          name: data.user.nome,
+          email: data.user.email,
+          isAuthenticated: true,
+        });
+
+        setRefetch(false);
+      }
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+
+  useEffect(() => {
+    checkLogin();
+  }, [refetch]);
 
   async function signInWithGoogle() {
     try {
@@ -94,11 +130,15 @@ function AuthProvider({ children }: AuthProviderProps) {
           id: String(userInfo.id),
           name: userInfo.given_name,
           email: userInfo.email,
-          avatar: userInfo.picture,
         };
 
+        await AsyncStorage.setItem(userStorageKey, JSON.stringify(loadedUser));
+        checkLogin();
+        setRefetch(false);
+
+        setAvatar(userInfo.picture);
+
         setUser(loadedUser);
-        // await AsyncStorage.setItem(userStorageKey, JSON.stringify(loadedUser));
       }
     } catch (err) {
       throw new Error(err);
@@ -106,14 +146,21 @@ function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signOut = async () => {
+    await AsyncStorage.removeItem(userStorageKey);
     setUser({
       isAuthenticated: false,
     } as UserProps);
-    await AsyncStorage.removeItem(userStorageKey);
   };
 
   const value = useMemo(
-    () => ({ user, setUser, userStorageLoading, signInWithGoogle, signOut }),
+    () => ({
+      user,
+      avatar,
+      setUser,
+      userStorageLoading,
+      signInWithGoogle,
+      signOut,
+    }),
     [user, userStorageLoading]
   );
 

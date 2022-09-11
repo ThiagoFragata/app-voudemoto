@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert } from "react-native";
 import { Image, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,7 +22,7 @@ export default function Login({ navigation }) {
 
   const [isLoading, setLoading] = useState(false);
 
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, user } = useAuth();
 
   async function handleSignInWithGoogle() {
     try {
