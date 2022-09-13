@@ -22,7 +22,7 @@ export default function Login({ navigation }) {
 
   const [isLoading, setLoading] = useState(false);
 
-  const { signInWithGoogle, user } = useAuth();
+  const { signInWithGoogle } = useAuth();
 
   async function handleSignInWithGoogle() {
     try {
@@ -31,7 +31,7 @@ export default function Login({ navigation }) {
       return await signInWithGoogle();
     } catch (err) {
       Alert.alert("Não foi possível conectar na conta Google");
-      console.log(err);
+    } finally {
       setLoading(false);
     }
   }

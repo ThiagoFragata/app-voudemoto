@@ -1,21 +1,27 @@
-import styled from 'styled-components/native';
+import styled from "styled-components/native";
 
 export const ContainerRide = styled.SafeAreaView`
   flex: 1;
   width: 100%;
-  background-color: ${({ theme }) => theme.colors.yellow_dark};
-`;
-
-export const FormRide = styled.View`
   padding: 16px;
-  background-color:${({ theme }) => theme.colors.yellow_dark};
 `;
 
-export const ButtonRide = styled.Text`
+interface Props {
+  marginTop: string;
+}
+
+export const HeaderRide = styled.View<Props>`
+  margin-top: ${({ marginTop }) => (marginTop ? marginTop : 0)};
+
+  flex-direction: row;
+  justify-content: space-between;
+`;
+
+export const ButtonRide = styled.TouchableOpacity`
   width: 100%;
 
   padding: 16px 24px;
-  border-radius: 32px;
+  border-radius: 16px;
 
   background-color: ${({ theme }) => theme.colors.info_100};
   color: ${({ theme }) => theme.colors.white};
@@ -26,9 +32,7 @@ export const ButtonRide = styled.Text`
 
 export const AddressList = styled.FlatList`
   width: 100%;
-  padding: 8px 16px 0;
-
-  background-color: ${({ theme }) => theme.colors.yellow_dark};
+  padding: 8px 8px 0;
 `;
 
 export const AddressItem = styled.TouchableOpacity`

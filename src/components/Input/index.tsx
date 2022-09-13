@@ -6,14 +6,15 @@ import { Flex, TextMedium } from "../../styles/globalStyles";
 
 interface InputProps extends TextInputProps {
   label?: string;
+  colorFont?: string;
 }
 
-export function Input({ label, ...rest }: InputProps) {
+export function Input({ label, colorFont, ...rest }: InputProps) {
   const theme = useTheme();
 
   return (
     <Flex direction="column" align="flex-start">
-      <TextMedium size={12} color={theme.colors.white}>
+      <TextMedium size={12} color={colorFont ? colorFont : theme.colors.white}>
         {label}
       </TextMedium>
       <InputContainer {...rest} />
@@ -27,7 +28,6 @@ export const InputContainer = styled(TextInput)`
   align-items: center;
   background-color: ${({ theme }) => theme.colors.white};
   padding: 8px 16px;
-  margin: 4px 0 16px;
   border-radius: 16px;
   font-size: 14px;
 `;

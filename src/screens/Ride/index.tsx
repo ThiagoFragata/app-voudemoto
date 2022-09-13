@@ -1,30 +1,58 @@
-import React from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useForm, Controller } from "react-hook-form";
+import React, { useState } from "react";
+import { Alert, Text, TouchableOpacity } from "react-native";
+import { useForm } from "react-hook-form";
 
 import {
   ContainerRide,
   ButtonRide,
   AddressList,
-  FormRide,
   AddressItem,
+  HeaderRide,
 } from "./styled";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { InputForm } from "../../components/InputForm";
+import { Flex, TextMedium } from "../../styles/globalStyles";
+import { useTheme } from "styled-components";
+import { Spacer } from "../Login/styles";
+import { api } from "../../services/axios";
+import { Input } from "../../components/Input";
+import { useAuth } from "../../hooks/auth";
 
-export default function Ride() {
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      boarding: "",
-      destiny: "",
-    },
-  });
-  const onSubmit = (data) => console.log(data);
+interface PlacesProps {
+  place_id: string;
+  description: string;
+  secondary_text: string;
+}
+
+export default function Ride({ navigation }) {
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
+
+  const [listPlaces, setListPlaces] = useState<PlacesProps[]>([]);
+  const [origin, setOrigin] = useState<PlacesProps>({} as PlacesProps);
+  const [destiny, setDestiny] = useState<PlacesProps>({} as PlacesProps);
+
+  const [activeInput, setActiveInput] = useState(null);
+
+  //get address list
+  async function getPlaces(address: string) {
+    try {
+      const { data } = await api.get(`address/${address}`);
+
+      if (data.error) {
+        Alert.alert(data);
+        return;
+      }
+
+      setListPlaces(data.list);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   return (
     <ContainerRide>
-      <View>
+      <HeaderRide marginTop={`${insets.top}px`}>
         <TouchableOpacity>
           <Text>Voltar</Text>
         </TouchableOpacity>
@@ -34,68 +62,43 @@ export default function Ride() {
         <TouchableOpacity>
           <Text>Cancelar</Text>
         </TouchableOpacity>
-      </View>
+      </HeaderRide>
 
-      <FormRide>
-        <View>
-          <View>
-            <Controller
-              control={control}
-              rules={{
-                required: true,
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <>
-                  <Text>Embarque</Text>
-                  <TextInput
-                    keyboardType="default"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                </>
-              )}
-              name="boarding"
-            />
-            {errors.boarding && (
-              <Text>Por favor informe seu local de embarque</Text>
-            )}
-          </View>
+      <Flex direction="column">
+        <Input
+          colorFont={theme.colors.black_dark}
+          placeholder="Embarque"
+          value={origin.description}
+          onFocus={() => setActiveInput("setOrigin")}
+          onChangeText={(address) => getPlaces(address)}
+        />
 
-          <View>
-            <Controller
-              control={control}
-              rules={{
-                required: true,
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <>
-                  <Text>Destino</Text>
-                  <TextInput
-                    keyboardType="default"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                </>
-              )}
-              name="destiny"
-            />
-            {errors.destiny && <Text>Por favor informe seu destino</Text>}
-          </View>
-        </View>
+        <Input
+          colorFont={theme.colors.black_dark}
+          placeholder="Destino"
+          value={destiny.description}
+          onFocus={() => setActiveInput("setDestiny")}
+          onChangeText={(address) => getPlaces(address)}
+        />
 
-        <TouchableOpacity onPress={handleSubmit(onSubmit)}>
-          <ButtonRide>Atualizar no mapa</ButtonRide>
-        </TouchableOpacity>
-      </FormRide>
+        <Spacer space="16px" />
+
+        <ButtonRide
+          onPress={() => navigation.navigate("Home", { origin, destiny })}
+        >
+          <TextMedium color={theme.colors.white} size={12} align="center">
+            Partiu corrida
+          </TextMedium>
+        </ButtonRide>
+      </Flex>
 
       <AddressList
-        data={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-        renderItem={(_item, _index) => (
-          <AddressItem>
-            <Text>Menlo Parl</Text>
-            <Text>Palo Alto, CA</Text>
+        data={listPlaces}
+        keyExtractor={(item: PlacesProps) => item.place_id}
+        renderItem={({ item }) => (
+          <AddressItem onPress={() => eval(activeInput)(item)}>
+            <Text>{item.description}</Text>
+            <Text>{item.secondary_text}</Text>
           </AddressItem>
         )}
       />

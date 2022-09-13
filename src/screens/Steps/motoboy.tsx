@@ -31,7 +31,7 @@ interface FormData {
 export default function Motoboy({ navigation }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { user, setUser } = useAuth();
+  const { user, setUser, avatar } = useAuth();
 
   const { control, handleSubmit } = useForm();
 
@@ -42,6 +42,7 @@ export default function Motoboy({ navigation }) {
           gId: user.id,
           nome: user.name,
           email: user.email,
+          avatar: avatar,
           tipo: "M",
         },
         motoboy: {

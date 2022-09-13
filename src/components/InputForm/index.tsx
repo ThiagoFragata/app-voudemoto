@@ -8,11 +8,18 @@ import { Input } from "../Input";
 
 interface InputFormProps extends TextInputProps {
   label?: string;
+  colorFont?: string;
   name: string;
   control: Control;
 }
 
-export function InputForm({ label, control, name, ...rest }: InputFormProps) {
+export function InputForm({
+  label,
+  control,
+  name,
+  colorFont,
+  ...rest
+}: InputFormProps) {
   const theme = useTheme();
 
   return (
@@ -25,6 +32,7 @@ export function InputForm({ label, control, name, ...rest }: InputFormProps) {
             onChangeText={onChange}
             value={value}
             label={label}
+            colorFont={colorFont}
             {...rest}
           />
         )}

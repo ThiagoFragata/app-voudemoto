@@ -67,11 +67,15 @@ export const BoxHome = styled.View.attrs({
   background-color: ${({ theme }) => theme.colors.white};
 `;
 
+interface HeaderHomeProps {
+  marginTop: string;
+}
+
 export const HeaderHome = styled.View.attrs({
   elevation: 50,
 })`
   position: absolute;
-  top: 32px;
+  top: ${({ top }) => (top ? top : 0)};
   align-self: center;
 
   border-radius: 16px;
@@ -132,4 +136,22 @@ export const ContainerPulse = styled.View`
 
   height: 100%;
   width: 100%;
+`;
+
+export const InputSearchRide = styled.TextInput`
+  border: 1px solid ${({ theme }) => theme.colors.light};
+  margin-top: 16px;
+  padding: 8px;
+  border-radius: 8px;
+`;
+
+interface ButtonCallDrive {
+  type: "C" | "F";
+}
+
+export const ButtonCallDrive = styled.TouchableOpacity`
+  border-radius: 12px;
+  padding: 8px 16px;
+  background-color: ${({ theme, type }) =>
+    type === "C" ? theme.colors.success_100 : theme.colors.danger_100};
 `;

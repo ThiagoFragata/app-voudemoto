@@ -1,5 +1,10 @@
+import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
+
+import Intl from "intl";
+import "intl/locale-data/jsonp/pt-BR"; // or any other locale you need
 
 import { PROVIDER_GOOGLE } from "react-native-maps";
 
@@ -7,48 +12,107 @@ import Pulse from "react-native-pulse";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ButtonSignOut } from "../../components/ButtonSignOut";
 import { useAuth } from "../../hooks/auth";
-import { Box, Bullet, Map } from "../../styles/globalStyles";
-import { Spacer } from "../Login/styles";
+import { api } from "../../services/axios";
+import {
+  Bullet,
+  Map,
+  TextMedium,
+  TextRegular,
+} from "../../styles/globalStyles";
 
 import {
   Address,
   Avatar,
   AvatarCard,
   BoxHome,
+  ButtonCallDrive,
   Card,
   ContainerHome,
   ContainerPulse,
   HeaderHome,
+  InputSearchRide,
   Item,
   Span,
   SubtitleAvatar,
   TitleAvatar,
 } from "./styles";
 
-export default function Home() {
+interface InfoRideProps {
+  price: string;
+  distance: {
+    text: string;
+  };
+  duration: {
+    text: string;
+  };
+  start_address: string;
+  end_address: string;
+}
+
+export default function Home({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const params = route.params;
+
+  let origin = params.origin?.place_id;
+  let destiny = params.destiny?.place_id;
+
+  const { user, avatar } = useAuth();
+
+  const [infoRide, setInfoRide] = useState<InfoRideProps>();
+
   const [type, setType] = useState("P");
   // P - passageiro
   // M - motoboy
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [status, setStatus] = useState("S");
   // S - Sem corrida
   // I - Passageiro com informações da corrida
   // P - Pesquisando
   // A - Aceitar Corrida
   // C - Em Corrida
-  const { user, avatar } = useAuth();
 
   //buscar dados do user
   useEffect(() => {
     setType(user.userType);
   }, []);
 
+  async function getDataRide() {
+    try {
+      const { data } = await api.post("/pre-ride", { origin, destiny });
+
+      if (data.error === false) {
+        setInfoRide({
+          distance: data.info.distance,
+          end_address: data.info.end_address,
+          duration: data.info.duration,
+          price: new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(data.info.price),
+          start_address: data.info.start_address,
+        });
+
+        setStatus("I");
+      } else {
+        setStatus("S");
+      }
+    } catch (err) {
+      console.error(err.message);
+      setStatus("S");
+    }
+  }
+
+  //buscar dados da corrida
+  useFocusEffect(
+    useCallback(() => {
+      getDataRide();
+    }, [origin, destiny])
+  );
+
   return (
     <ContainerHome>
-      <ButtonSignOut />
+      {status === "P" && <ButtonSignOut />}
+
       <Map
         provider={PROVIDER_GOOGLE}
         region={{
@@ -64,60 +128,75 @@ export default function Home() {
       {type === "P" && status === "S" && (
         <>
           <AvatarCard top={`${insets.top}px`}>
-            <Avatar
-              source={{
-                uri: avatar,
-              }}
-            />
+            {avatar && (
+              <Avatar
+                source={{
+                  uri: avatar,
+                }}
+              />
+            )}
             <View>
               <TitleAvatar>{user.name}</TitleAvatar>
-              {/* <SubtitleAvatar>Passageiro</SubtitleAvatar> */}
+              <SubtitleAvatar>Passageiro</SubtitleAvatar>
             </View>
           </AvatarCard>
 
           <BoxHome>
             <SubtitleAvatar>Olá, {user.name}</SubtitleAvatar>
             <TitleAvatar>Para onde você quer ir?</TitleAvatar>
-            {/* <InputHome keyboardType="default" /> */}
+            <TouchableOpacity onPress={() => navigation.navigate("Ride")}>
+              <InputSearchRide
+                keyboardType="default"
+                editable={false}
+                placeholder="Para onde você quer ir?"
+              />
+            </TouchableOpacity>
           </BoxHome>
         </>
       )}
 
       {/* procurando corrida e apertar pra chamar moto-taxi ou cancelar*/}
-      {type === "P" && (status === "I" || status === "P") && (
+      {type === "P" && status === "I" && (
         <>
-          <HeaderHome>
+          <HeaderHome top={`${insets.top}px`}>
             <Address>
               <SubtitleAvatar>
-                <Bullet numberOfLine={1} /> Endereço de embarque
+                <Bullet numberOfLine={1} /> {infoRide.start_address}
               </SubtitleAvatar>
 
               <SubtitleAvatar>
-                <Bullet numberOfLine={1} color="orange" /> Endereço destino
+                <Bullet numberOfLine={1} color="orange" />{" "}
+                {infoRide.end_address}
               </SubtitleAvatar>
             </Address>
 
-            <TouchableOpacity>
-              <Text>Toque para editar</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Ride")}>
+              <TextRegular size={12} align="center">
+                Toque para editar
+              </TextRegular>
             </TouchableOpacity>
           </HeaderHome>
 
           <BoxHome>
             <SubtitleAvatar align="center">Convencional </SubtitleAvatar>
             <Card>
-              <Item>R$12,00</Item>
+              <Item>{infoRide.price}</Item>
               <Item>|</Item>
-              <Item>15 min</Item>
+              <Item>{infoRide.duration.text}</Item>
             </Card>
 
             {status === "I" ? (
-              <TouchableOpacity>
-                <Text>Chamar Moto-táxi</Text>
-              </TouchableOpacity>
+              <ButtonCallDrive type="C">
+                <TextMedium size={14} align="center" color="white">
+                  Chamar Moto-táxi
+                </TextMedium>
+              </ButtonCallDrive>
             ) : (
-              <TouchableOpacity>
-                <Text>Cancelar Moto-táxi</Text>
-              </TouchableOpacity>
+              <ButtonCallDrive type="F">
+                <TextMedium size={14} align="center" color="white">
+                  Cancelar Moto-táxi
+                </TextMedium>
+              </ButtonCallDrive>
             )}
           </BoxHome>
         </>

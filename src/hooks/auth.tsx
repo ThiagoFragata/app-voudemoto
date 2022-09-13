@@ -14,7 +14,6 @@ import * as WebBrowser from "expo-web-browser";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { userStorageKey } from "../utils/keys";
 import { api } from "../services/axios";
-import { SubtitleAvatar } from "../screens/Home/styles";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -35,10 +34,12 @@ interface UserProps {
 }
 
 interface AuthContextData {
-  user: UserProps;
   userStorageLoading: boolean;
-  setUser: React.Dispatch<React.SetStateAction<UserProps>>;
+
   avatar: string;
+
+  user: UserProps;
+  setUser: React.Dispatch<React.SetStateAction<UserProps>>;
 
   signInWithGoogle(): Promise<void>;
   signOut(): Promise<void>;

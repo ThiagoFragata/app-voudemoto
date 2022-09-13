@@ -15,7 +15,7 @@ import { api } from "../../services/axios";
 
 export default function Type({ navigation }) {
   const theme = useTheme();
-  const { user, setUser } = useAuth();
+  const { user, setUser, avatar } = useAuth();
 
   function isMotoboy() {
     navigation.navigate("Motoboy");
@@ -35,6 +35,7 @@ export default function Type({ navigation }) {
           gId: user.id,
           nome: user.name,
           email: user.email,
+          avatar: avatar,
           tipo: "P",
         },
       };
