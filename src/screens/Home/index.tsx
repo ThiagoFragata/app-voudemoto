@@ -9,6 +9,7 @@ import "intl/locale-data/jsonp/pt-BR"; // or any other locale you need
 import { PROVIDER_GOOGLE } from "react-native-maps";
 
 import Pulse from "react-native-pulse";
+import { Marker, Polyline } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ButtonSignOut } from "../../components/ButtonSignOut";
 import { useAuth } from "../../hooks/auth";
@@ -19,6 +20,8 @@ import {
   TextMedium,
   TextRegular,
 } from "../../styles/globalStyles";
+
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import {
   Address,
@@ -47,6 +50,12 @@ interface InfoRideProps {
   };
   start_address: string;
   end_address: string;
+  coordinates: LatLng[];
+}
+
+interface LatLng {
+  latitude: number;
+  longitude: number;
 }
 
 export default function Home({ navigation, route }) {
@@ -90,6 +99,7 @@ export default function Home({ navigation, route }) {
             currency: "BRL",
           }).format(data.info.price),
           start_address: data.info.start_address,
+          coordinates: data.info.route,
         });
 
         setStatus("I");
@@ -115,14 +125,42 @@ export default function Home({ navigation, route }) {
 
       <Map
         provider={PROVIDER_GOOGLE}
-        region={{
-          latitude: 37.78825,
-          longitude: -122.4324,
+        initialRegion={{
+          latitude: -3.1298824,
+          longitude: -58.4345648,
           latitudeDelta: 0.015,
           longitudeDelta: 0.0121,
         }}
-        disabled={status === "I" || status === "P"}
-      />
+        disabled={status === "P"}
+      >
+        {infoRide && (
+          <>
+            <Marker coordinate={infoRide.coordinates[0]}>
+              <MaterialCommunityIcons
+                name="map-marker-account"
+                size={24}
+                color="black"
+              />
+            </Marker>
+
+            <Polyline
+              coordinates={infoRide.coordinates}
+              strokeWidth={4}
+              strokeColor="#000"
+            />
+
+            <Marker
+              coordinate={infoRide.coordinates[infoRide.coordinates.length - 1]}
+            >
+              <MaterialCommunityIcons
+                name="map-marker"
+                size={24}
+                color="black"
+              />
+            </Marker>
+          </>
+        )}
+      </Map>
 
       {/* passageiro sem corrida à procurar corrida */}
       {type === "P" && status === "S" && (
@@ -160,13 +198,12 @@ export default function Home({ navigation, route }) {
         <>
           <HeaderHome top={`${insets.top}px`}>
             <Address>
-              <SubtitleAvatar>
-                <Bullet numberOfLine={1} /> {infoRide.start_address}
+              <SubtitleAvatar numberOfLines={1}>
+                <Bullet /> {infoRide.start_address}
               </SubtitleAvatar>
 
-              <SubtitleAvatar>
-                <Bullet numberOfLine={1} color="orange" />{" "}
-                {infoRide.end_address}
+              <SubtitleAvatar numberOfLines={1}>
+                <Bullet color="orange" /> {infoRide.end_address}
               </SubtitleAvatar>
             </Address>
 
