@@ -20,17 +20,14 @@ interface AuthProviderProps {
 }
 
 interface UserProps {
-  isAuthenticated: boolean;
-  id: string;
+  uId?: string;
+  gId: string;
   name: string;
   email: string;
   avatar?: string;
-  model?: string;
-  color?: string;
-  plate?: string;
-  type?: string;
-  key?: string;
+  isAuthenticated?: boolean;
   userType?: string;
+  socketId?: string;
 }
 
 interface AuthContextData {
@@ -65,17 +62,16 @@ function AuthProvider({ children }: AuthProviderProps) {
   const [refetch, setRefetch] = useState(true);
   const [userStorageLoading, setUserStorageLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadUser() {
-      const asyncUser = await AsyncStorage.getItem(userStorageKey);
+  async function loadUser() {
+    const asyncUser = await AsyncStorage.getItem(userStorageKey);
 
-      if (asyncUser) {
-        const userInfo = JSON.parse(asyncUser);
-        setUser(userInfo);
-        setUserStorageLoading(false);
-      }
+    if (asyncUser) {
+      const userInfo = JSON.parse(asyncUser);
+      setUser(userInfo);
+      setUserStorageLoading(false);
     }
-
+  }
+  useEffect(() => {
     loadUser();
   }, []);
 
@@ -84,23 +80,29 @@ function AuthProvider({ children }: AuthProviderProps) {
       const asyncUser = await AsyncStorage.getItem(userStorageKey);
       const userInfo = JSON.parse(asyncUser);
 
-      if (userInfo.email) {
+      if (userInfo?.email) {
         const { data } = await api.post("/check-user", {
           email: userInfo.email,
         });
 
         setUser({
-          userType: data.user.tipo,
-          id: String(userInfo.id),
+          uId: data.user?._id,
+          gId: data.user.gId,
           name: data.user.nome,
           email: data.user.email,
+          avatar: data.user.avatar,
+          userType: data.user.tipo,
           isAuthenticated: true,
         });
 
         setRefetch(false);
+      } else {
+        throw new Error(
+          "Error ao conectar na conta do google, você ainda fez seu cadastro ou não está logado com sua conta!"
+        );
       }
     } catch (err) {
-      console.log(err.message);
+      console.log(err);
     }
   }
 
@@ -125,24 +127,22 @@ function AuthProvider({ children }: AuthProviderProps) {
         );
         const userInfo = await response.json();
 
+        setAvatar(userInfo.picture);
         const loadedUser: UserProps = {
-          userType: "",
-          isAuthenticated: false,
-          id: String(userInfo.id),
+          gId: userInfo.id,
           name: userInfo.given_name,
           email: userInfo.email,
+          avatar: userInfo.picture,
         };
 
         await AsyncStorage.setItem(userStorageKey, JSON.stringify(loadedUser));
+        setUser(loadedUser);
+
         checkLogin();
         setRefetch(false);
-
-        setAvatar(userInfo.picture);
-
-        setUser(loadedUser);
       }
     } catch (err) {
-      throw new Error(err);
+      throw new Error("Error message API =>", err);
     }
   }
 

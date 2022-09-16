@@ -31,6 +31,7 @@ export default function Login({ navigation }) {
       return await signInWithGoogle();
     } catch (err) {
       Alert.alert("Não foi possível conectar na conta Google");
+      navigation.replace("Login");
     } finally {
       setLoading(false);
     }

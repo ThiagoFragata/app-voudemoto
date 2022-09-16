@@ -10,7 +10,6 @@ import {
   HeaderRide,
 } from "./styled";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { InputForm } from "../../components/InputForm";
 import { Flex, TextMedium } from "../../styles/globalStyles";
 import { useTheme } from "styled-components";
 import { Spacer } from "../Login/styles";
@@ -53,13 +52,13 @@ export default function Ride({ navigation }) {
   return (
     <ContainerRide>
       <HeaderRide marginTop={`${insets.top}px`}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text>Voltar</Text>
         </TouchableOpacity>
 
         <Text>Corrida</Text>
 
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.replace("Home")}>
           <Text>Cancelar</Text>
         </TouchableOpacity>
       </HeaderRide>

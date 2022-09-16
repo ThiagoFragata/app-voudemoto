@@ -39,7 +39,7 @@ export default function Motoboy({ navigation }) {
     try {
       const payload = {
         user: {
-          gId: user.id,
+          gId: user.gId,
           nome: user.name,
           email: user.email,
           avatar: avatar,
@@ -51,21 +51,16 @@ export default function Motoboy({ navigation }) {
           modelo: form.modelo,
           cor: form.cor,
         },
-        payment: {
-          tipoChave: form.tipo,
-          chave: form.chave,
-        },
+        // payment: {
+        //   tipoChave: form.tipo,
+        //   chave: form.chave,
+        // },
       };
 
       setUser({
         ...user,
         isAuthenticated: true,
         userType: "M",
-        model: form.modelo,
-        color: form.cor,
-        plate: form.placa,
-        type: form.tipo,
-        key: form.chave,
       });
 
       await api.post("/signup", payload);
@@ -104,6 +99,8 @@ export default function Motoboy({ navigation }) {
             name="modelo"
           />
 
+          <Spacer space="16px" />
+
           <InputForm
             label="Marca do veículo"
             placeholder="Digite a marca"
@@ -111,12 +108,17 @@ export default function Motoboy({ navigation }) {
             name="marca"
           />
 
+          <Spacer space="16px" />
+
           <InputForm
             label="Cor do veículo"
             placeholder="Digite o cor"
             control={control}
             name="cor"
           />
+
+          <Spacer space="16px" />
+
           <InputForm
             label="Placa do veículo"
             placeholder="Digite o Placa"
@@ -124,7 +126,7 @@ export default function Motoboy({ navigation }) {
             name="placa"
           />
 
-          <Spacer space="16px" />
+          {/* <Spacer space="16px" />
 
           <TextMedium color={theme.colors.white} size={16} align="center">
             Dados de pagamento
@@ -132,9 +134,9 @@ export default function Motoboy({ navigation }) {
 
           <Spacer space="16px" />
 
-          {/* <InputSelect label="Tipo de Chave" /> */}
+          <InputSelect label="Tipo de Chave" /> */}
 
-          <InputForm
+          {/* <InputForm
             label="Tipo de Chave"
             placeholder="Selecione um tipo"
             control={control}
@@ -146,11 +148,11 @@ export default function Motoboy({ navigation }) {
             placeholder="Digite ou cole aqui a sua chave pix"
             control={control}
             name="chave"
-          />
+          /> */}
 
           <Spacer space="32px" />
 
-          <ButtonCancel>
+          <ButtonCancel onPress={() => navigation.replace("Login")}>
             <TextMedium
               color={theme.colors.danger_100}
               size={12}

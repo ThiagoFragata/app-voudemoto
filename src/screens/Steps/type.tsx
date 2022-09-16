@@ -15,7 +15,7 @@ import { api } from "../../services/axios";
 
 export default function Type({ navigation }) {
   const theme = useTheme();
-  const { user, setUser, avatar } = useAuth();
+  const { user, setUser, avatar, signOut } = useAuth();
 
   function isMotoboy() {
     navigation.navigate("Motoboy");
@@ -24,15 +24,10 @@ export default function Type({ navigation }) {
   async function isPassenger() {
     try {
       Alert.alert("Passageiro cadastrado com sucesso");
-      setUser({
-        ...user,
-        isAuthenticated: true,
-        userType: "P",
-      });
 
       const payload = {
         user: {
-          gId: user.id,
+          gId: user.gId,
           nome: user.name,
           email: user.email,
           avatar: avatar,
@@ -40,12 +35,24 @@ export default function Type({ navigation }) {
         },
       };
 
-      await api.post("/signup", payload);
+      const { data } = await api.post("/signup", payload);
+
+      setUser({
+        uId: data.finalUser.id,
+        gId: data.finalUser.gId,
+        name: data.finalUser.nome,
+        email: data.finalUser.email,
+        userType: data.finalUser.tipo,
+        isAuthenticated: true,
+      });
+
       await AsyncStorage.setItem(userStorageKey, JSON.stringify(user));
 
       navigation.navigate("Home");
     } catch (err) {
       Alert.alert("Não foi possível concluir o cadastro!");
+      signOut();
+      navigation.replace("Login");
       console.log(err.message);
     }
   }

@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import styled from "styled-components/native";
 
 interface Props {
@@ -52,6 +53,12 @@ export const SubtitleAvatar = styled.Text<Props>`
   margin-bottom: 4px;
 `;
 
+export const TitleAddress = styled.Text<Props>`
+  color: ${({ theme }) => theme.colors.black_light};
+  font-weight: normal;
+  margin-bottom: 4px;
+`;
+
 export const BoxHome = styled.View.attrs({
   elevation: 50,
 })`
@@ -73,7 +80,7 @@ interface HeaderHomeProps {
 
 export const HeaderHome = styled.View.attrs({
   elevation: 50,
-})`
+})<HeaderHomeProps>`
   position: absolute;
   top: ${({ top }) => (top ? top : 0)};
   align-self: center;
@@ -96,11 +103,15 @@ export const Card = styled.View<PropsCard>`
   flex-direction: ${({ direction }) => (direction ? direction : "row")};
   align-items: ${({ align }) => (align ? align : "center")};
   justify-content: ${({ justify }) => (justify ? justify : "space-around;")};
-  margin: 16px 0;
+  margin: 8px 0;
+`;
+
+export const CardUser = styled.View`
+  margin-right: 16px;
 `;
 
 export const Item = styled.Text`
-  font-size: 32px;
+  font-size: 20px;
   font-weight: bold;
   color: ${({ theme }) => theme.colors.black_dark};
 `;
@@ -145,11 +156,18 @@ export const InputSearchRide = styled.TextInput`
   border-radius: 8px;
 `;
 
-interface ButtonCallDrive {
+interface ButtonProps {
   type: "C" | "F";
 }
 
-export const ButtonCallDrive = styled.TouchableOpacity`
+export const ButtonCallDrive = styled.TouchableOpacity<ButtonProps>`
+  border-radius: 12px;
+  padding: 8px 16px;
+  background-color: ${({ theme, type }) =>
+    type === "C" ? theme.colors.success_100 : theme.colors.danger_100};
+`;
+
+export const ButtonAcceptRide = styled.TouchableOpacity<ButtonProps>`
   border-radius: 12px;
   padding: 8px 16px;
   background-color: ${({ theme, type }) =>

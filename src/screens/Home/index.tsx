@@ -1,10 +1,12 @@
 import { useFocusEffect } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useCallback } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 
 import Intl from "intl";
-import "intl/locale-data/jsonp/pt-BR"; // or any other locale you need
+import "intl/locale-data/jsonp/pt-BR";
+
+import socket from "../../services/socket";
 
 import { PROVIDER_GOOGLE } from "react-native-maps";
 
@@ -21,22 +23,26 @@ import {
   TextRegular,
 } from "../../styles/globalStyles";
 
+import { MaterialIcons } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Fontisto } from "@expo/vector-icons";
 
 import {
   Address,
   Avatar,
   AvatarCard,
   BoxHome,
+  ButtonAcceptRide,
   ButtonCallDrive,
   Card,
+  CardUser,
   ContainerHome,
   ContainerPulse,
   HeaderHome,
   InputSearchRide,
   Item,
-  Span,
   SubtitleAvatar,
+  TitleAddress,
   TitleAvatar,
 } from "./styles";
 
@@ -50,7 +56,32 @@ interface InfoRideProps {
   };
   start_address: string;
   end_address: string;
-  coordinates: LatLng[];
+  route: LatLng[];
+}
+
+interface RideProps {
+  info: {
+    user: {
+      _id: string;
+      gId: string;
+      nome: string;
+      email: string;
+      avatar?: string;
+      socketId?: string;
+    };
+    ride: {
+      price: string;
+      distance: {
+        text: string;
+      };
+      duration: {
+        text: string;
+      };
+      start_address: string;
+      end_address: string;
+      route: LatLng[];
+    };
+  };
 }
 
 interface LatLng {
@@ -61,22 +92,35 @@ interface LatLng {
 export default function Home({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const params = route.params;
+  const mapRef = useRef(null);
+  const ws = useRef(null);
 
-  let origin = params.origin?.place_id;
-  let destiny = params.destiny?.place_id;
+  let origin = params?.origin?.place_id;
+  let destiny = params?.destiny?.place_id;
 
-  const { user, avatar } = useAuth();
+  const { user } = useAuth();
 
-  const [infoRide, setInfoRide] = useState<InfoRideProps>();
+  const [driverLocation, setDriverLocation] = useState({
+    latitude: -3.1301294,
+    longitude: 58.4386439,
+  });
+
+  const [payment, setPayment] = useState<any>();
+  const [infoRide, setInfoRide] = useState<InfoRideProps>(null);
+  const [ride, setRide] = useState<RideProps>();
+  const [inRide, setInRide] = useState<any>();
+  const [routesDriver, setRoutesDriver] = useState(null);
+  const [socketId, setSocketId] = useState(null);
 
   const [type, setType] = useState("P");
   // P - passageiro
   // M - motoboy
 
-  const [status, setStatus] = useState("S");
+  const [status, setStatus] = useState("C");
   // S - Sem corrida
   // I - Passageiro com informações da corrida
   // P - Pesquisando
+
   // A - Aceitar Corrida
   // C - Em Corrida
 
@@ -99,7 +143,7 @@ export default function Home({ navigation, route }) {
             currency: "BRL",
           }).format(data.info.price),
           start_address: data.info.start_address,
-          coordinates: data.info.route,
+          route: data.info.route,
         });
 
         setStatus("I");
@@ -107,7 +151,7 @@ export default function Home({ navigation, route }) {
         setStatus("S");
       }
     } catch (err) {
-      console.error(err.message);
+      console.log(err.message);
       setStatus("S");
     }
   }
@@ -119,11 +163,174 @@ export default function Home({ navigation, route }) {
     }, [origin, destiny])
   );
 
+  // atualiza camera de posição do mapa
+  useEffect(() => {
+    mapRef.current.fitToCoordinates(infoRide?.route, {
+      options: {
+        edgePadding: {
+          top: 100,
+          bottom: 150,
+          right: 70,
+          left: 70,
+        },
+      },
+    });
+  }, [infoRide]);
+
+  //conectar socket
+  function initSocket() {
+    ws.current = socket();
+
+    ws.current.on("connect", () => {
+      const id = ws.current.id;
+      updateSocket(id);
+      setSocketId(id);
+
+      ws.current.on("ride-request", (ride) => {
+        console.log("socket de solicitação de corrida =>", ride);
+        if (ride) {
+          setRide(ride);
+          setStatus("A");
+        }
+      });
+
+      ws.current.on("ride", (ride) => {
+        console.log("socket de corrida aceita =>", ride);
+        if (ride) {
+          console.log("dados da ride =>", ride);
+          setInRide(ride);
+          setStatus("C");
+        }
+      });
+
+      ws.current.on("ride-update", (coordinates) => {
+        console.log("socket de coordinates =>", coordinates);
+        updateMapLocation(coordinates);
+      });
+    });
+  }
+
+  //atualizar id socket
+  async function updateSocket(socketId: string) {
+    try {
+      const { data } = await api.put(`/socket/${user.uId}`, {
+        socketId: socketId,
+      });
+
+      if (data.error === true) {
+        throw new Error("Socket vazio!");
+      }
+    } catch (err) {
+      console.log("Update socketId error => ", err.message);
+    }
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      initSocket();
+    }, [origin, destiny])
+  );
+
+  async function updateLocation(coordinates) {
+    try {
+      await api.put(`/location/${user.uId}`, {
+        coordinates,
+        socketId: socketId,
+        status: status,
+      });
+    } catch (err) {
+      console.log("Update  location error => ", err.message);
+    }
+  }
+
+  async function updateMapLocation(coordinates) {
+    if (user.userType === "P") {
+      setDriverLocation({
+        latitude: coordinates.coordinates[0],
+        longitude: coordinates.coordinates[1],
+      });
+    }
+
+    mapRef.current.animateCamera({
+      center: {
+        latitude: coordinates.coordinates[0],
+        longitude: coordinates.coordinates[1],
+      },
+      zoom: 14,
+    });
+  }
+
+  //chamando corrida
+  async function RequestRide() {
+    try {
+      const payload = {
+        userId: user.uId,
+        info: infoRide,
+      };
+
+      const { data } = await api.post("/call-ride", payload);
+
+      if (data.error === true) {
+        throw new Error(data);
+      } else {
+        setStatus("P");
+      }
+    } catch (err) {
+      setStatus("S");
+      console.log(err.message);
+    }
+  }
+
+  //aceitando corrida
+  async function AcceptedRide() {
+    try {
+      const payload = {
+        info: ride.info.ride,
+        userId: ride.info.user._id,
+        driverId: user.uId,
+      };
+
+      const { data } = await api.post("/accept-ride", payload);
+
+      if (data.error === true) {
+        throw new Error(data);
+      } else {
+        Alert.alert("Corrida Aceita");
+        setStatus("C");
+        console.log(data.ride);
+        setRoutesDriver(data.ride.infoRide.route);
+      }
+    } catch (err) {
+      setStatus("S");
+      Alert.alert("Não foi possivel aceitar essa corrida");
+      console.log(err.message);
+    }
+  }
+
+  //cancelando corrida
+  async function CancelRide(message: string) {
+    try {
+      const { data } = await api.get(`/payment/${user.uId}`);
+      setStatus("S");
+      // setPayment({
+      //   tipo: data.data.payment.tipoChave,
+      //   chave: data.data.payment.chave,
+      // });
+
+      // navigation.replace("Payment", payment);
+
+      Alert.alert("Corrida Finalizada", message);
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+
   return (
     <ContainerHome>
-      {status === "P" && <ButtonSignOut />}
-
+      {status === "S" && <ButtonSignOut />}
+      {/* mapa */}
       <Map
+        ref={mapRef}
         provider={PROVIDER_GOOGLE}
         initialRegion={{
           latitude: -3.1298824,
@@ -131,27 +338,53 @@ export default function Home({ navigation, route }) {
           latitudeDelta: 0.015,
           longitudeDelta: 0.0121,
         }}
-        disabled={status === "P"}
+        onRegionChangeComplete={(region) => {
+          updateLocation([region.latitude, region.longitude]);
+          setDriverLocation(region);
+        }}
+        disabled={status === "P" || status === "A"}
       >
-        {infoRide && (
+        {/* {(ride?.info.user._id || user.userType === "M") && (
+          <Marker coordinate={driverLocation}>
+            <Fontisto name="motorcycle" size={24} color="black" />
+          </Marker>
+        )} */}
+
+        {routesDriver && (
           <>
-            <Marker coordinate={infoRide.coordinates[0]}>
-              <MaterialCommunityIcons
-                name="map-marker-account"
-                size={24}
-                color="black"
-              />
+            <Marker coordinate={routesDriver[0]}>
+              <MaterialIcons name="emoji-people" size={24} color="black" />
             </Marker>
 
             <Polyline
-              coordinates={infoRide.coordinates}
+              coordinates={routesDriver}
               strokeWidth={4}
               strokeColor="#000"
             />
 
-            <Marker
-              coordinate={infoRide.coordinates[infoRide.coordinates.length - 1]}
-            >
+            <Marker coordinate={routesDriver[routesDriver.length - 1]}>
+              <MaterialCommunityIcons
+                name="map-marker"
+                size={24}
+                color="black"
+              />
+            </Marker>
+          </>
+        )}
+
+        {infoRide && (
+          <>
+            <Marker coordinate={infoRide.route[0]}>
+              <MaterialIcons name="emoji-people" size={24} color="black" />
+            </Marker>
+
+            <Polyline
+              coordinates={infoRide.route}
+              strokeWidth={4}
+              strokeColor="#000"
+            />
+
+            <Marker coordinate={infoRide.route[infoRide.route.length - 1]}>
               <MaterialCommunityIcons
                 name="map-marker"
                 size={24}
@@ -166,10 +399,10 @@ export default function Home({ navigation, route }) {
       {type === "P" && status === "S" && (
         <>
           <AvatarCard top={`${insets.top}px`}>
-            {avatar && (
+            {user.avatar && (
               <Avatar
                 source={{
-                  uri: avatar,
+                  uri: user.avatar,
                 }}
               />
             )}
@@ -223,7 +456,7 @@ export default function Home({ navigation, route }) {
             </Card>
 
             {status === "I" ? (
-              <ButtonCallDrive type="C">
+              <ButtonCallDrive type="C" onPress={() => RequestRide()}>
                 <TextMedium size={14} align="center" color="white">
                   Chamar Moto-táxi
                 </TextMedium>
@@ -239,7 +472,7 @@ export default function Home({ navigation, route }) {
         </>
       )}
 
-      {/* passageiro pesquisando mototáxi */}
+      {/* passageiro pesquisando mototáxi PULSE */}
       {type === "P" && status === "P" && (
         <ContainerPulse>
           <Pulse
@@ -255,41 +488,48 @@ export default function Home({ navigation, route }) {
       {/* passageiro em corrida */}
       {type === "P" && status === "C" && (
         <>
-          <HeaderHome>
-            <SubtitleAvatar>
-              <Bullet numberOfLine={1} /> Endereço de embarque
+          <HeaderHome top={`${insets.top}px`}>
+            <SubtitleAvatar numberOfLines={1}>
+              <Bullet /> {inRide?.infoRide.start_address}
             </SubtitleAvatar>
 
-            <SubtitleAvatar>
-              <Bullet numberOfLine={1} color="orange" /> Endereço destino
+            <SubtitleAvatar numberOfLines={1}>
+              <Bullet color="orange" /> {inRide?.infoRide.end_address}
             </SubtitleAvatar>
           </HeaderHome>
 
           <BoxHome>
             <Card justify="flex-start">
-              <Avatar
-                source={{
-                  uri: avatar,
-                }}
-              />
+              {inRide?.infoDriver.avatar && (
+                <Avatar
+                  source={{
+                    uri: inRide?.infoDriver.avatar,
+                  }}
+                />
+              )}
               <View>
-                <TitleAvatar>Nome motorista</TitleAvatar>
-                <SubtitleAvatar>XJ 600 Preta, JSK423</SubtitleAvatar>
+                <TitleAvatar>{inRide?.infoDriver.nome}</TitleAvatar>
+                <SubtitleAvatar>
+                  {inRide?.infoMotocycle.modelo}, {inRide?.infoMotocycle.cor}
+                </SubtitleAvatar>
               </View>
             </Card>
 
             <Card>
-              <Item>R$12,00</Item>
+              <Item>{inRide?.infoRide.price}</Item>
               <Item>|</Item>
 
-              <Item>
-                5min <Span>Aprox.</Span>
-              </Item>
+              <Item>{inRide?.infoRide.distance.text}</Item>
             </Card>
 
-            <TouchableOpacity>
-              <Text>Cancelar Corrida</Text>
-            </TouchableOpacity>
+            <ButtonAcceptRide
+              type="F"
+              onPress={() => CancelRide("Não esqueça de pagar")}
+            >
+              <TextMedium align="center" color="white">
+                Finalizar Corrida
+              </TextMedium>
+            </ButtonAcceptRide>
           </BoxHome>
         </>
       )}
@@ -300,12 +540,12 @@ export default function Home({ navigation, route }) {
           <AvatarCard top={`${insets.top}px`}>
             <Avatar
               source={{
-                uri: avatar,
+                uri: user.avatar,
               }}
             />
             <View>
               <TitleAvatar>{user.name}</TitleAvatar>
-              <SubtitleAvatar>{user.email}</SubtitleAvatar>
+              <SubtitleAvatar>Moto-taxista</SubtitleAvatar>
             </View>
           </AvatarCard>
 
@@ -324,53 +564,60 @@ export default function Home({ navigation, route }) {
           <AvatarCard top={`${insets.top}px`}>
             <Avatar
               source={{
-                uri: avatar,
+                uri: user.avatar,
               }}
             />
             <View>
               <TitleAvatar>{user.name}</TitleAvatar>
-              <SubtitleAvatar>{user.email}</SubtitleAvatar>
+              <SubtitleAvatar>Moto-taxista</SubtitleAvatar>
             </View>
           </AvatarCard>
 
           <BoxHome>
             <Card justify="space-between">
               <Card justify="flex-start">
-                <Avatar
-                  source={{
-                    uri: user.avatar,
-                  }}
-                />
+                {ride?.info?.user?.avatar && (
+                  <Avatar
+                    source={{
+                      uri: ride?.info?.user?.avatar,
+                    }}
+                  />
+                )}
 
-                <View>
-                  <TitleAvatar>{user.name}</TitleAvatar>
-                  <SubtitleAvatar>2km</SubtitleAvatar>
-                </View>
+                <CardUser>
+                  <TitleAvatar numberOfLines={1}>
+                    {ride?.info.user.nome}
+                  </TitleAvatar>
+                  <SubtitleAvatar numberOfLines={1}>
+                    {ride?.info.ride.distance.text}
+                  </SubtitleAvatar>
+                </CardUser>
               </Card>
 
               <Card direction="column" justify="flex-start" align="flex-start">
-                <SubtitleAvatar>
-                  <Bullet numberOfLine={1} /> Endereço de embarque
-                </SubtitleAvatar>
+                <TitleAddress numberOfLines={1}>
+                  <Bullet /> {ride?.info.ride.start_address}
+                </TitleAddress>
 
-                <SubtitleAvatar>
-                  <Bullet numberOfLine={1} color="orange" /> Endereço destino
-                </SubtitleAvatar>
+                <TitleAddress numberOfLines={1}>
+                  <Bullet color="orange" />
+                  {ride?.info.ride.end_address}
+                </TitleAddress>
               </Card>
             </Card>
-
             <Card>
-              <Item>R$12,00</Item>
+              <Item numberOfLines={1}>{ride?.info.ride.price}</Item>
+
               <Item>|</Item>
 
-              <Item>
-                5min <Span>Aprox.</Span>
-              </Item>
+              <Item numberOfLines={1}>{ride?.info.ride.duration.text}</Item>
             </Card>
 
-            <TouchableOpacity>
-              <Text>Aceitar Corrida</Text>
-            </TouchableOpacity>
+            <ButtonAcceptRide type="C" onPress={() => AcceptedRide()}>
+              <TextMedium align="center" color="white">
+                Aceitar Corrida
+              </TextMedium>
+            </ButtonAcceptRide>
           </BoxHome>
         </>
       )}
@@ -381,7 +628,7 @@ export default function Home({ navigation, route }) {
           <AvatarCard top={`${insets.top}px`}>
             <Avatar
               source={{
-                uri: avatar,
+                uri: user.avatar,
               }}
             />
             <View>
@@ -393,41 +640,51 @@ export default function Home({ navigation, route }) {
           <BoxHome>
             <Card justify="space-between">
               <Card justify="flex-start">
-                <Avatar
-                  source={{
-                    uri: user.avatar,
-                  }}
-                />
+                {ride?.info.user.avatar && (
+                  <Avatar
+                    source={{
+                      uri: ride.info.user.avatar,
+                    }}
+                  />
+                )}
 
-                <View>
-                  <TitleAvatar>{user.name}</TitleAvatar>
-                  <SubtitleAvatar>2km</SubtitleAvatar>
-                </View>
+                <CardUser>
+                  <TitleAvatar numberOfLines={1}>
+                    {ride?.info.user.nome}
+                  </TitleAvatar>
+                  <SubtitleAvatar numberOfLines={1}>
+                    {ride?.info.ride.distance.text}
+                  </SubtitleAvatar>
+                </CardUser>
               </Card>
 
               <Card direction="column" justify="flex-start" align="flex-start">
-                <SubtitleAvatar>
-                  <Bullet numberOfLine={1} /> Endereço de embarque
-                </SubtitleAvatar>
+                <TitleAddress numberOfLines={1}>
+                  <Bullet /> {ride?.info.ride.start_address}
+                </TitleAddress>
 
-                <SubtitleAvatar>
-                  <Bullet numberOfLine={1} color="orange" /> Endereço destino
-                </SubtitleAvatar>
+                <TitleAddress numberOfLines={1}>
+                  <Bullet color="orange" /> {ride?.info.ride.end_address}
+                </TitleAddress>
               </Card>
             </Card>
 
             <Card>
-              <Item>R$12,00</Item>
+              <Item numberOfLines={1}>{ride?.info.ride.price}</Item>
+
               <Item>|</Item>
 
-              <Item>
-                5min <Span>Aprox.</Span>
-              </Item>
+              <Item numberOfLines={1}>{ride?.info.ride.distance.text}</Item>
             </Card>
 
-            <TouchableOpacity>
-              <Text>Cancelar Moto-táxi</Text>
-            </TouchableOpacity>
+            <ButtonAcceptRide
+              type="F"
+              onPress={() => CancelRide("Não esqueça de receber")}
+            >
+              <TextMedium align="center" color="white">
+                Finalizar Corrida
+              </TextMedium>
+            </ButtonAcceptRide>
           </BoxHome>
         </>
       )}
